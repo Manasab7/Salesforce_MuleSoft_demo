@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="34638543-7e17-477d-a63a-12b80933754a" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="8194e294-e773-4c24-a056-3029d2d8a171" >
+		<salesforce:basic-connection username="${sfdc.user}" password="${sfdc.password}" securityToken="${sfdc.token}" />
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="228b3ccf-0593-4fb0-8059-2f21048a5439" file="app.properties" />
+	<email:smtp-config name="Email_SMTP1" doc:name="Email SMTP" doc:id="3b372042-525e-4e2a-8772-89cc16e34580" >
+		<email:smtp-connection host="smtp.gmail.com" user="b.manasa777" password="Riya@0507" >
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="True" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<flow name="sfdc-contactsFlow1" doc:id="b3daa6e9-5215-4e41-8364-dfd06dc31b5f" >
+		<salesforce:subscribe-topic doc:name="Subscribe topic" doc:id="13d7fc13-69b0-41f8-bfe4-c301d0603d71" config-ref="Salesforce_Config" topic="/ContactTopic"/>
+		<logger level="DEBUG" doc:name="Logger" doc:id="38850939-a565-44f9-bb13-6677bb6f9e62" message="Received Event : #[map-payload:Id] - #[map-payload:FirstName] #[map-payload:LastName]"/>
+		<email:send doc:name="Send" doc:id="d098fe52-4691-4066-9e69-1e7eee72dd53" config-ref="Email_SMTP1" fromAddress="b.manasa777" subject="SFDC Connectivity Workshop">
+			<email:to-addresses >
+				<email:to-address value="bogaval@uwindsor.ca" />
+			</email:to-addresses>
+			<email:headers ><![CDATA[#[output application/java
+---
+{
+	"Key" : "Value"
+}]]]></email:headers>
+		</email:send>
+	</flow>
+	<flow name="sfdc-contactsFlow" doc:id="6e1ea1dc-0bbb-4e7d-9f30-08118d559ed4" >
+		<http:listener doc:name="Listener" doc:id="ff4f270b-3ffb-455e-af36-1f25c838dc61" config-ref="HTTP_Listener_config" path="/contacts"/>
+		<salesforce:query doc:name="Query" doc:id="a3681f10-3cce-4b71-82da-08ff7fe9c1bf" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query >select Id,FirstName,LastName,Email from contact limit 10</salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="c1d3eb8c-c266-40dd-bb3f-479058f15a94" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

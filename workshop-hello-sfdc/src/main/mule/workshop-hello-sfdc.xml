@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="23ecba22-ab4f-4ff3-b3f1-a838e64fcc76" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="595d9f20-8244-4835-9462-f14fd829c013" file="app.properties" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="fed57116-14ab-48b9-a31e-7f1224f498ee" >
+		<salesforce:basic-connection username="${sfdc.user}" password="${sfdc.password}" securityToken="${sfdc.token}" />
+	</salesforce:sfdc-config>
+	<salesforce:sfdc-config name="Salesforce_Config1" doc:name="Salesforce Config" doc:id="600fd0e3-c51f-4b6b-b02b-f7c0698b0ff4" >
+		<salesforce:basic-connection username="${sfdc.user}" password="${sfdc.password}" securityToken="${sfdc.token}" />
+	</salesforce:sfdc-config>
+	<flow name="workshop-hello-sfdcFlow" doc:id="d22fbeda-de1f-4be2-bd24-9ea327192b83" >
+		<http:listener doc:name="Listener" doc:id="88e11c41-6517-47d9-bc20-1782fcecbaef" config-ref="HTTP_Listener_config" path="/hello"/>
+		<salesforce:query doc:name="Query" doc:id="e3ced332-1b8c-48ed-8e0a-1a25e838dc6e" config-ref="Salesforce_Config1">
+			<salesforce:salesforce-query >SELECT Department,Email,FirstName,Id,LastName,Title FROM Contact</salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="da2aac31-830d-41f5-8615-731d857c6bce" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
